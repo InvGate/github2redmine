@@ -102,3 +102,4 @@ ENV/
 
 *.json
 *.csv
+.idea
