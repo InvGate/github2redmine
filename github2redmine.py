@@ -8,7 +8,7 @@ redmine_properties = ['title', 'description', 'status']
 RedmineIssue = namedtuple('RedmineIssue', redmine_properties)
 
 
-api_key = "7184433c4946685e3330300bbe536616e0c52a18"
+api_key = "replace me"
 user = "InvGate"
 repo = "neo-assets-front"
 
