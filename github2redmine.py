@@ -1,4 +1,5 @@
 import csv
+import sys
 import json
 from collections import namedtuple
 import requests   # fades
@@ -8,12 +9,14 @@ redmine_properties = ['title', 'description', 'status']
 RedmineIssue = namedtuple('RedmineIssue', redmine_properties)
 
 
-api_key = "replace me"
-user = "InvGate"
-repo = "neo-assets-front"
+def fetch_github_issues():
+    next_url = fetch_github_issue_page()
+
+    while next_url is not None:
+        next_url = fetch_github_issue_page(next_url.get('url'))
 
 
-def fetch_github_issues(issue_url=None):
+def fetch_github_issue_page(issue_url=None):
     if issue_url is None:
         issue_url = "https://api.github.com/repos/{}/{}/issues?access_token={}&per_page=1000&page=1".format(user, repo, api_key)
         write_csv_header()
@@ -22,13 +25,11 @@ def fetch_github_issues(issue_url=None):
     next_url = data.links.get('next')
 
     export_issues_to_csv(data.json())
-
-    if next_url is not None:
-        fetch_github_issues(next_url.get('url'))
+    return next_url
 
 
 def write_csv_header():
-    with open('issues.csv', 'a') as csvfile:
+    with open('issues.csv', 'w') as csvfile:
         issue_writer = csv.writer(csvfile, delimiter=',',
                                   quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
@@ -80,13 +81,20 @@ def fetch_github_comments(github_issue_data):
     request = requests.get(comments_url+'?access_token='+api_key)
     if request.status_code == 200:
         for comment in request.json():
-            comments = comments + "\n" + comment["body"]
+            comments = " ".join((comments, "\n", comment["user"]["login"], ":\n", comment["body"]))
 
     return comments.encode('utf-8') if comments else ''
 
-def main():
+
+def main(user_param, repo_param, api_key_param):
+    global api_key
+    api_key = api_key_param
+    global user
+    user = user_param
+    global repo
+    repo = repo_param
     fetch_github_issues()
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
