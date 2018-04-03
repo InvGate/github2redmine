@@ -71,7 +71,10 @@ def get_redmine_issue(github_issue_data):
 
 def get_redmine_description(github_issue_data):
     description = github_issue_data['body'].encode('utf-8') if github_issue_data['body'] else ''
-    comments = fetch_github_comments(github_issue_data)
+    if github_issue_data["comments"] > 0:
+        comments = fetch_github_comments(github_issue_data)
+    else:
+        comments = ""
     return "{}{}".format(description, comments)
 
 
@@ -81,7 +84,7 @@ def fetch_github_comments(github_issue_data):
     request = requests.get(comments_url+'?access_token='+api_key)
     if request.status_code == 200:
         for comment in request.json():
-            comments = " ".join((comments, "\n", comment["user"]["login"], ":\n", comment["body"]))
+            comments = "".join((comments, "\n", comment["user"]["login"], ":\n    ", comment["body"]))
 
     return comments.encode('utf-8') if comments else ''
 
