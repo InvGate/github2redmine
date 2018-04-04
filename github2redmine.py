@@ -5,7 +5,7 @@ from collections import namedtuple
 import requests   # fades
 
 
-redmine_properties = ['title', 'description', 'status']
+redmine_properties = ['title', 'description', 'status', 'tags', 'tracker']
 RedmineIssue = namedtuple('RedmineIssue', redmine_properties)
 
 
@@ -30,7 +30,7 @@ def fetch_github_issue_page(issue_url=None):
 
 def write_csv_header():
     with open('issues.csv', 'w') as csvfile:
-        issue_writer = csv.writer(csvfile, delimiter=',',
+        issue_writer = csv.writer(csvfile, delimiter=';',
                                   quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         issue_writer.writerow(redmine_properties)
@@ -38,7 +38,7 @@ def write_csv_header():
 
 def export_issues_to_csv(issues_filepath):
     with open('issues.csv', 'a') as csvfile:
-        issue_writer = csv.writer(csvfile, delimiter=',',
+        issue_writer = csv.writer(csvfile, delimiter=';',
                                   quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         for redmine_issue in parse_github_issues(issues_filepath):
@@ -63,10 +63,21 @@ def get_redmine_issue(github_issue_data):
     title = github_issue_data['title'].encode('utf-8') if github_issue_data['title'] else ''
     description = get_redmine_description(github_issue_data)
     status = github_issue_data['state'].encode('utf-8') if github_issue_data['state'] else ''
+    tags = get_redmine_tags(github_issue_data['labels'])[1:]
+    tracker = "Bug" if "bug" in tags else "Features"
     redmine_issue = RedmineIssue(title=title,
                                  description=description,
-                                 status=status)
+                                 status=status,
+                                 tags=tags,
+                                 tracker=tracker)
     return redmine_issue
+
+
+def get_redmine_tags(labels):
+    tags = ""
+    for label in labels:
+        tags = ",".join((tags, label['name']))
+    return tags
 
 
 def get_redmine_description(github_issue_data):
